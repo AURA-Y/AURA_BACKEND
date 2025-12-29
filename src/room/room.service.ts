@@ -13,6 +13,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomResponseDto } from './dto/room-response.dto';
 import { MediaService } from '../media/media.service';
 import { BotService } from '../bot/bot.service';
+import { PeerService } from '../peer/peer.service';
 
 /**
  * 방 메타데이터 (REST API용)
@@ -31,12 +32,21 @@ export class RoomService {
   private readonly logger = new Logger(RoomService.name);
   private rooms: Map<string, Room> = new Map();
   private roomMetadata: Map<string, RoomMetadata> = new Map();
+  private webSocketServer: any = null; // WebSocket Server 참조
 
   constructor(
     private readonly mediaService: MediaService,
+    private readonly peerService: PeerService,
     @Inject(forwardRef(() => BotService))
     private readonly botService: BotService,
   ) {}
+
+  /**
+   * WebSocket Server 설정 (SignallingGateway에서 호출)
+   */
+  setWebSocketServer(server: any): void {
+    this.webSocketServer = server;
+  }
 
   /**
    * 방 생성 (MediaService에서 Router 직접 생성)
@@ -68,6 +78,25 @@ export class RoomService {
         .joinRoom(roomId, 'AURA Bot', '/bot-avatar.png')
         .then((bot) => {
           this.logger.log(`Bot ${bot.botId} auto-joined room ${roomId}`);
+
+          // Bot을 Peer로 등록
+          const botPeer = this.peerService.createPeer(
+            bot.botId,
+            bot.botName,
+            roomId,
+          );
+          this.addPeerToRoom(roomId, bot.botId, botPeer);
+
+          // WebSocket을 통해 방의 모든 클라이언트에게 Bot 참가 알림
+          if (this.webSocketServer) {
+            this.webSocketServer.to(roomId).emit('peer-joined', {
+              peerId: bot.botId,
+              displayName: bot.botName,
+              isBot: true,
+              avatarUrl: bot.avatarUrl,
+            });
+            this.logger.log(`Broadcasted bot-joined event to room ${roomId}`);
+          }
         })
         .catch((error) => {
           this.logger.warn(`Failed to auto-join bot: ${error.message}`);

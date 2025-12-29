@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
@@ -21,7 +22,7 @@ import { PeerDto } from '../peer/dto/peer.dto';
   },
 })
 export class SignallingGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
   server: Server;
@@ -35,6 +36,12 @@ export class SignallingGateway
     private readonly peerService: PeerService,
     private readonly mediaService: MediaService,
   ) {}
+
+  afterInit(server: Server) {
+    this.logger.log('WebSocket Gateway initialized');
+    // RoomService에 WebSocket Server 참조 전달
+    this.roomService.setWebSocketServer(server);
+  }
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);

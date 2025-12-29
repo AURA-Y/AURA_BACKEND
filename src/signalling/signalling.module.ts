@@ -7,5 +7,6 @@ import { MediaModule } from '../media/media.module';
 @Module({
   imports: [RoomModule, PeerModule, MediaModule],
   providers: [SignallingGateway],
+  exports: [SignallingGateway],
 })
 export class SignallingModule {}
