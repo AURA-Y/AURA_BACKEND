@@ -279,6 +279,11 @@ export class SignallingGateway
       peer.addProducer(producer);
 
       // 다른 참가자들에게 새 Producer 알림
+      const otherPeersInRoom = await this.server.in(roomId).except(client.id).fetchSockets();
+      this.logger.log(
+        `Emitting new-producer event to ${otherPeersInRoom.length} peers in room ${roomId}`,
+      );
+
       client.to(roomId).emit('new-producer', {
         peerId,
         producerId: producer.id,
