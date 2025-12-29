@@ -60,6 +60,9 @@ Thumbs.db
 .env.test.local
 .env.production.local
 
+# AWS
+aws/
+
 # Docker
 docker-compose.override.yml
 .docker
