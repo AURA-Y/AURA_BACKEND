@@ -52,20 +52,16 @@ jobs:
       run: |
         echo "🏗️ Building Docker image with Bun..."
 
-        # Build Docker image with cache and progress output
+        # Build with GitHub Actions cache (faster rebuilds)
         docker buildx build \
           --platform linux/amd64 \
-          --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest \
-          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --cache-from=type=gha \
+          --cache-to=type=gha,mode=max \
           --progress=plain \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-          --load \
+          --push \
           .
-
-        echo "📦 Pushing images to ECR..."
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
         echo "✅ Image pushed successfully"
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
