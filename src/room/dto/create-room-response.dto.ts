@@ -38,14 +38,8 @@ export class CreateRoomResponse {
   userName: string;
 
   @ApiProperty({
-    description: 'LiveKit 접근 토큰',
+    description: '접근 토큰',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   token: string;
-
-  @ApiProperty({
-    description: 'LiveKit 서버 URL',
-    example: 'wss://livekit-server.com',
-  })
-  livekitUrl: string;
 }

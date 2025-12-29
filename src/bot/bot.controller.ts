@@ -30,7 +30,7 @@ export class BotController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Bot을 방에 참가시킵니다",
-    description: "AI Bot을 LiveKit 화상회의 방에 참가시킵니다",
+    description: "AI Bot을 화상회의 방에 참가시킵니다",
   })
   @ApiResponse({
     status: 201,

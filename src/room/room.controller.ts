@@ -145,7 +145,6 @@ export class RoomController {
       maxParticipants,
       userName: dto.userName,
       token,
-      livekitUrl: process.env.SIGNALLING_URL || 'http://localhost:3002',
     };
   }
 

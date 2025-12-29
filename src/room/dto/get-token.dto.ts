@@ -21,14 +21,14 @@ export class GetTokenDto {
 
 export class TokenResponse {
   @ApiProperty({
-    description: 'LiveKit 접근 토큰 (JWT)',
+    description: '접근 토큰 (JWT)',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   token: string;
 
   @ApiProperty({
-    description: 'LiveKit 서버 URL',
-    example: 'wss://livekit-server.com',
+    description: '서버 URL',
+    example: 'http://aura-server-alb-2065673986.ap-northeast-2.elb.amazonaws.com',
   })
   url: string;
 }

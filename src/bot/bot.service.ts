@@ -10,7 +10,6 @@ import { randomUUID } from "crypto";
 
 /**
  * 가상 Bot 인스턴스
- * 실제 LiveKit 연결 없이 상태만 관리
  */
 interface BotInstance {
   botId: string;
@@ -26,9 +25,7 @@ interface BotInstance {
  * 실제 WebRTC 연결 없이 Bot 상태만 관리
  * 프론트엔드에서 Bot을 렌더링
  *
- * 나중에 실제 AI Agent로 교체 가능:
- * - Python LiveKit Agent (이미지/음성 스트리밍)
- * - Node.js Puppeteer Agent
+ * 나중에 실제 AI Agent로 교체 가능
  */
 @Injectable()
 export class BotService {
