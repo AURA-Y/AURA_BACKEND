@@ -10,6 +10,8 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 import { RoomService } from '../room/room.service';
 import { PeerService } from '../peer/peer.service';
 import { MediaService } from '../media/media.service';
@@ -37,8 +39,27 @@ export class SignallingGateway
     private readonly mediaService: MediaService,
   ) {}
 
-  afterInit(server: Server) {
+  async afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
+
+    // Redis Adapter 설정 (여러 서버 인스턴스 간 통신)
+    if (process.env.REDIS_URL) {
+      try {
+        const pubClient = createClient({ url: process.env.REDIS_URL });
+        const subClient = pubClient.duplicate();
+
+        await Promise.all([pubClient.connect(), subClient.connect()]);
+
+        server.adapter(createAdapter(pubClient, subClient));
+        this.logger.log('✓ Socket.io Redis Adapter configured');
+      } catch (error) {
+        this.logger.error('Failed to connect to Redis:', error);
+        this.logger.warn('Running without Redis Adapter (single instance only)');
+      }
+    } else {
+      this.logger.warn('REDIS_URL not set - running without Redis Adapter (single instance only)');
+    }
+
     // RoomService에 WebSocket Server 참조 전달
     this.roomService.setWebSocketServer(server);
   }
