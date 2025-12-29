@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  aura-server:
+    build:
+      context: ./aura-server
+      dockerfile: Dockerfile
+    container_name: aura-server
+    ports:
+      - "3002:3002"
+      - "10000-10100:10000-10100/udp"
+      - "10000-10100:10000-10100/tcp"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - MEDIASOUP_ANNOUNCED_IP=${MEDIASOUP_ANNOUNCED_IP:-127.0.0.1}
+      - MEDIASOUP_WORKERS=${MEDIASOUP_WORKERS:-8}
+      - JWT_SECRET=${JWT_SECRET:-JUNGLE_JWT_SECRET_KEY}
+      - JWT_EXPIRES_IN=1d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+networks:
+  default:
+    driver: bridge
