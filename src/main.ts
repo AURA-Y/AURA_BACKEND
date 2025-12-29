@@ -3,12 +3,76 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { initializePublicIP } from './utils/get-public-ip';
+import { DataSource } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+
+async function initializeDatabase() {
+  const logger = new Logger('DatabaseInit');
+
+  const dataSource = new DataSource({
+    type: 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    username: process.env.DB_USERNAME || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'aura',
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  });
+
+  try {
+    await dataSource.initialize();
+    logger.log('Database connection established');
+
+    // users 테이블 생성
+    await dataSource.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    logger.log('✓ Users table created');
+
+    await dataSource.query(`
+      CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)
+    `);
+    logger.log('✓ Username index created');
+
+    // 테스트 계정 3개 생성
+    const testUsers = [
+      { username: 'testuser1', password: 'password123!', name: '테스트유저1' },
+      { username: 'testuser2', password: 'password123!', name: '테스트유저2' },
+      { username: 'testuser3', password: 'password123!', name: '테스트유저3' },
+    ];
+
+    for (const user of testUsers) {
+      const hashedPassword = await bcrypt.hash(user.password, 10);
+      await dataSource.query(
+        `INSERT INTO users (username, password, name) VALUES ($1, $2, $3) ON CONFLICT (username) DO NOTHING`,
+        [user.username, hashedPassword, user.name]
+      );
+    }
+    logger.log('✓ Test users created (testuser1, testuser2, testuser3)');
+
+    await dataSource.destroy();
+    logger.log('Database initialization complete');
+  } catch (error) {
+    logger.error('Error initializing database:', error);
+    throw error;
+  }
+}
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // AWS ECS 환경에서 Public IP 자동 감지 (Mediasoup announcedIp 설정)
   await initializePublicIP();
+
+  // 데이터베이스 초기화 (테이블 생성 및 테스트 계정 추가)
+  await initializeDatabase();
 
   const app = await NestFactory.create(AppModule);
 
