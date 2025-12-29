@@ -1,15 +1,53 @@
+# Dependencies
 node_modules
 npm-debug.log
+bun.lockb
+
+# Build
 dist
+
+# Git
 .git
 .gitignore
-.env.example
+*.md
 README.md
+
+# IDE
 .vscode
 .idea
-*.md
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
 logs
 *.log
-.DS_Store
+
+# Test
 coverage
 .nyc_output
+test
+*.test.ts
+*.spec.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AWS
+aws
+.aws
+*.pem
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# CI/CD
+.github
+.gitlab-ci.yml

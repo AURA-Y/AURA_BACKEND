@@ -8,8 +8,8 @@ export const mediasoupConfig = {
     : Object.keys(os.cpus()).length,
 
   worker: {
-    rtcMinPort: 10000,
-    rtcMaxPort: 10100,
+    rtcMinPort: parseInt(process.env.MEDIASOUP_RTC_MIN_PORT || '10000', 10),
+    rtcMaxPort: parseInt(process.env.MEDIASOUP_RTC_MAX_PORT || '59999', 10),
     logLevel: 'warn' as mediasoupTypes.WorkerLogLevel,
     logTags: [
       'info',

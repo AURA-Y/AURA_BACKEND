@@ -2,9 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { initializePublicIP } from './utils/get-public-ip';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
+  // AWS ECS 환경에서 Public IP 자동 감지 (Mediasoup announcedIp 설정)
+  await initializePublicIP();
+
   const app = await NestFactory.create(AppModule);
 
   // CORS 활성화 (개발 환경: 모든 오리진 허용)
