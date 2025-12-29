@@ -52,11 +52,12 @@ jobs:
       run: |
         echo "🏗️ Building Docker image with Bun..."
 
-        # Build Docker image with cache
+        # Build Docker image with cache and progress output
         docker buildx build \
           --platform linux/amd64 \
           --cache-from=$ECR_REGISTRY/$ECR_REPOSITORY:latest \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --progress=plain \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
           --load \

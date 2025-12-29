@@ -16,7 +16,10 @@ RUN apk add --no-cache \
 COPY package.json bun.lock* ./
 
 # 의존성 설치 (mediasoup postinstall 실행)
-RUN bun install --frozen-lockfile
+# frozen-lockfile 제거하여 유연하게 설치
+RUN echo "Installing dependencies..." && \
+    bun install && \
+    echo "Dependencies installed successfully"
 
 # 소스 코드 복사
 COPY . .
