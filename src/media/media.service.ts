@@ -93,14 +93,25 @@ export class MediaService implements OnModuleInit {
   ): Promise<mediasoupTypes.WebRtcTransport> {
     const { webRtcTransport } = mediasoupConfig;
 
+    // IMPORTANT: Read announcedIp from env at runtime, not from static config
+    // This ensures we use the IP detected by initializePublicIP()
+    const announcedIp = process.env.MEDIASOUP_ANNOUNCED_IP || '127.0.0.1';
+
     const transport = await router.createWebRtcTransport({
-      listenIps: webRtcTransport.listenIps,
+      listenIps: [
+        {
+          ip: '0.0.0.0',
+          announcedIp: announcedIp,
+        },
+      ],
       enableUdp: webRtcTransport.enableUdp,
       enableTcp: webRtcTransport.enableTcp,
       preferUdp: webRtcTransport.preferUdp,
       initialAvailableOutgoingBitrate:
         webRtcTransport.initialAvailableOutgoingBitrate,
     });
+
+    console.log(`[MediaService] Created WebRTC transport with announcedIp: ${announcedIp}`);
 
     // 대역폭 제한 설정
     if (webRtcTransport.maxIncomingBitrate) {
