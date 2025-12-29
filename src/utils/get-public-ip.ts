@@ -8,27 +8,17 @@ import axios from 'axios';
  */
 export async function getPublicIP(): Promise<string> {
   try {
-    // AWS ECS Task 메타데이터 엔드포인트 (v4)
-    const metadataUri = process.env.ECS_CONTAINER_METADATA_URI_V4;
-
-    if (metadataUri) {
-      // ECS Fargate 환경
-      const taskMetadataResponse = await axios.get(`${metadataUri}/task`, {
-        timeout: 2000,
+    // ECS Fargate에서는 네트워크 메타데이터가 private IP를 반환하므로
+    // 외부 IP 조회 서비스를 먼저 사용합니다
+    try {
+      const externalResponse = await axios.get('https://api.ipify.org?format=text', {
+        timeout: 3000,
       });
-
-      // Task의 네트워크 인터페이스에서 Public IP 추출
-      const containers = taskMetadataResponse.data.Containers;
-      if (containers && containers.length > 0) {
-        const networks = containers[0].Networks;
-        if (networks && networks.length > 0) {
-          const publicIP = networks[0].IPv4Addresses?.[0];
-          if (publicIP && publicIP !== '127.0.0.1') {
-            console.log(`✅ ECS Public IP detected: ${publicIP}`);
-            return publicIP;
-          }
-        }
-      }
+      const publicIP = externalResponse.data.trim();
+      console.log(`✅ External Public IP detected: ${publicIP}`);
+      return publicIP;
+    } catch (externalError) {
+      console.warn('⚠️  External IP service failed, trying EC2 metadata...');
     }
 
     // Fallback: EC2 메타데이터 API 시도
@@ -40,19 +30,34 @@ export async function getPublicIP(): Promise<string> {
       console.log(`✅ EC2 Public IP detected: ${response.data}`);
       return response.data;
     } catch (ec2Error) {
-      // EC2 메타데이터 실패 시 무시
+      console.warn('⚠️  EC2 metadata failed');
     }
 
-    // Fallback: 외부 IP 조회 서비스
-    const externalResponse = await axios.get('https://api.ipify.org?format=text', {
-      timeout: 2000,
-    });
-    console.log(`✅ External IP detected: ${externalResponse.data}`);
-    return externalResponse.data;
+    // Last resort: ECS Task 메타데이터 (보통 private IP를 반환)
+    const metadataUri = process.env.ECS_CONTAINER_METADATA_URI_V4;
+    if (metadataUri) {
+      const taskMetadataResponse = await axios.get(`${metadataUri}/task`, {
+        timeout: 2000,
+      });
+
+      const containers = taskMetadataResponse.data.Containers;
+      if (containers && containers.length > 0) {
+        const networks = containers[0].Networks;
+        if (networks && networks.length > 0) {
+          const ip = networks[0].IPv4Addresses?.[0];
+          if (ip && ip !== '127.0.0.1') {
+            console.warn(`⚠️  Using ECS private IP (may not work): ${ip}`);
+            return ip;
+          }
+        }
+      }
+    }
+
+    console.warn('⚠️  Failed to detect Public IP, using fallback 127.0.0.1');
+    return '127.0.0.1';
 
   } catch (error) {
-    console.warn('⚠️  Failed to detect Public IP, using 127.0.0.1');
-    console.warn('   Error:', error.message);
+    console.error('⚠️  Error detecting Public IP:', error.message);
     return '127.0.0.1';
   }
 }
